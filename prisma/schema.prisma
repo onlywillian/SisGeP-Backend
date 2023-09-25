@@ -1,0 +1,50 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Locations {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique @db.VarChar(255)
+  description String   @db.VarChar(255)
+  photo       String   @db.VarChar(255)
+  qr_code     String   @db.VarChar(255)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  root_location    Equipments[]
+  current_location Equipments[] @relation("currentLocation")
+}
+
+model Users {
+  id         Int          @id @default(autoincrement())
+  username   String       @unique @db.VarChar(255)
+  office     String       @db.VarChar(255)
+  password   String       @db.VarChar(255)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  Equipments Equipments[]
+}
+
+model Equipments {
+  id                  Int        @id @default(autoincrement())
+  name                String     @db.VarChar(255)
+  description         String     @db.VarChar(255)
+  photo               String     @db.VarChar(255)
+  Locations           Locations? @relation(fields: [root_location_id], references: [id])
+  root_location_id    Int?
+  Current             Locations? @relation("currentLocation", fields: [current_location_id], references: [id])
+  current_location_id Int?
+  Last_Used           Users?     @relation(fields: [last_used], references: [id])
+  last_used           Int?
+  qr_code             String     @db.VarChar(255)
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
+}
