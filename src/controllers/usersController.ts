@@ -14,7 +14,7 @@ export const get = async (req: Request, res: Response, next: NextFunction) => {
   } catch (err) {}
 };
 
-export const getUniqueUser = async (req: Request, res: Response) => {
+export const getUnique = async (req: Request, res: Response) => {
   const { id }: any = req.params;
 
   const user = await prisma.users.findFirst({
@@ -87,7 +87,7 @@ export const put = async (req: Request, res: Response) => {
   return res.status(200).send({ User: updateduser });
 };
 
-export const deleteUser = async (req: Request, res: Response) => {
+export const del = async (req: Request, res: Response) => {
   const { id } = req.body;
 
   const user = await prisma.users.findFirst({
