@@ -29,41 +29,38 @@ export const getUnique = async (req: Request, res: Response) => {
 };
 
 export const post = async (req: Request, res: Response) => {
-  console.log(req.files, req.body);
+  try {
+    const { name, description, photo } = req.body;
 
-  const { name, description, photo } = req.body;
+    const location = await prisma.locations.findFirst({
+      where: {
+        name: name,
+      },
+    });
 
-  let qrcodeURL: string = "";
+    if (location)
+      return res.status(500).send({ Error: "Esse local já existe!" });
 
-  QRCode.toDataURL("", { scale: 8 }, (err, url) => {
-    if (err)
-      return res.status(500).send({ Error: "Erro na criação do QRcode" });
+    QRCode.toDataURL("www.google.com", { scale: 8 }, async (err, url) => {
+      if (err) throw err;
 
-    qrcodeURL = url;
-  });
+      const newLocation = await prisma.locations.create({
+        data: {
+          name: name,
+          description: description,
+          photo: photo,
+          qr_code: url,
+        },
+      });
 
-  const location = await prisma.locations.findFirst({
-    where: {
-      name: name,
-    },
-  });
+      if (!newLocation)
+        return res.status(500).send({ Error: "Erro na criacao do usuario" });
 
-  if (!location)
-    return res.status(500).send({ Error: "Erro na criação do local." });
-
-  const newLocation = await prisma.locations.create({
-    data: {
-      name: name,
-      description: description,
-      photo: photo,
-      qr_code: qrcodeURL,
-    },
-  });
-
-  if (!newLocation)
-    return res.status(500).send({ Error: "Erro na criacao do usuario" });
-
-  return res.status(201).send({ Location: newLocation });
+      return res.status(201).send({ Location: url });
+    });
+  } catch (err) {
+    console.log(err);
+  }
 };
 
 export const put = async (req: Request, res: Response) => {

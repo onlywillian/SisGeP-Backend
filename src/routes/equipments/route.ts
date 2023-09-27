@@ -7,10 +7,14 @@ const upload = multer({ dest: "uploads/" });
 
 const equipmentsRouter = Router();
 
-equipmentsRouter.get("/locations", equipmentsController.get);
-equipmentsRouter.get("/locations/:id", equipmentsController.getUnique);
-equipmentsRouter.post("/locations/new", equipmentsController.post);
-equipmentsRouter.put("/locations/update", equipmentsController.put);
-equipmentsRouter.delete("/locations/delete", equipmentsController.del);
+equipmentsRouter.get("/equipments", equipmentsController.get);
+equipmentsRouter.get("/equipments/:id", equipmentsController.getUnique);
+equipmentsRouter.post(
+  "/equipments/new",
+  upload.any(),
+  equipmentsController.post
+);
+equipmentsRouter.put("/equipments/update", equipmentsController.put);
+equipmentsRouter.delete("/equipments/delete", equipmentsController.del);
 
 export default equipmentsRouter;

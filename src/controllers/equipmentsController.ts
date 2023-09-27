@@ -29,31 +29,38 @@ export const getUnique = async (req: Request, res: Response) => {
 };
 
 export const post = async (req: Request, res: Response) => {
-  console.log(req.files, req.body);
+  const {
+    name,
+    description,
+    photo,
+    root_location_id,
+    current_location_id,
+    qr_code,
+  }: any = req.body;
 
-  // const {id, name, description, photo,root_location_id, current_location_id, qr_code}: any = req.body;
+  const equipment = await prisma.equipments.findFirst({
+    where: {
+      name: name,
+    },
+  });
 
-  // const equipment = await prisma.equipments.findFirst({
-  //     where: {
-  //         id: id
-  //     }
-  // })
+  if (!equipment)
+    return res.status(500).send({ Error: "Erro ao criar o equipamento." });
 
-  // if(!equipment) return res.status(500).send({ Error: "Erro ao criar o equipamento."})
+  const newEquipment = await prisma.equipments.create({
+    data: {
+      name: name,
+      description: description,
+      photo: photo,
+      root_location_id: root_location_id,
+      current_location_id: current_location_id,
+      qr_code: qr_code,
+    },
+  });
+  if (!newEquipment)
+    return res.status(500).send({ Error: "Erro na criacao do usuario" });
 
-  // const newEquipment= await prisma.equipments.create({
-  //     data: {
-  //         name: name,
-  //         description: description,
-  //         photo: photo,
-  //         root_location_id: root_location_id,
-  //         current_location_id: current_location_id,
-  //         qr_code: qr_code,
-  //     }
-  // })
-  // if (!newEquipment) return res.status(500).send({ Error: "Erro na criacao do usuario" });
-
-  // return res.status(201).send({ Equipments: newEquipment });
+  return res.status(201).send({ Equipments: newEquipment });
 };
 
 export const put = async (req: Request, res: Response) => {
