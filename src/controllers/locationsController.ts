@@ -1,36 +1,52 @@
-import { Request, Response, NextFunction } from "express";
+import { Request, Response } from "express";
 import { PrismaClient } from "@prisma/client";
-import QRCode from "qrcode";
+import createQRcode from "../services/createQRcode";
+import uploadImage from "../services/uploadImageService";
+import updateImage from "../services/updateImageService";
+import deleteImage from "../services/deleteImageService";
 
 const prisma = new PrismaClient();
-
 export const get = async (req: Request, res: Response) => {
-  const locations = await prisma.locations.findMany();
+  try {
+    const locations = await prisma.locations.findMany();
 
-  if (!locations)
-    return res.status(404).send({ Error: "Nenhum local encontrado." });
+    if (!locations)
+      return res.status(404).send({ Error: "Nenhum local encontrado." });
 
-  return res.status(200).send({ Locations: locations });
+    return res.status(200).send({ Locations: locations });
+  } catch(err) {
+    console.log(err)
+  }
 };
 
 export const getUnique = async (req: Request, res: Response) => {
-  const { id }: any = req.params;
+  try {
+    const { id }: any = req.params;
 
-  const location = await prisma.locations.findFirst({
-    where: {
-      id: id,
-    },
-  });
+    const location = await prisma.locations.findFirst({
+      where: {
+        id: Number(id),
+      },
+    });
+  
+    if (!location)
+      return res.status(404).send({ Error: "Nenhum local encontrado." });
+  
+    return res.status(200).send({ Location: location });
 
-  if (!location)
-    return res.status(404).send({ Error: "Nenhum local encontrado." });
-
-  return res.status(200).send({ Locations: location });
+  } catch (err) {
+    console.log(err)
+  }
 };
 
 export const post = async (req: Request, res: Response) => {
   try {
-    const { name, description, photo } = req.body;
+    const { name, description } = req.body;
+    const file = req.file
+
+    if (!file) {
+      return res.status(400).json({ Error: 'Nenhum arquivo foi enviado.' });
+    }
 
     const location = await prisma.locations.findFirst({
       where: {
@@ -39,76 +55,106 @@ export const post = async (req: Request, res: Response) => {
     });
 
     if (location)
-      return res.status(500).send({ Error: "Esse local já existe!" });
+      return res.status(401).send({ Error: "Esse local já existe!" });
 
-    QRCode.toDataURL("www.google.com", { scale: 8 }, async (err, url) => {
-      if (err) throw err;
-
-      const newLocation = await prisma.locations.create({
-        data: {
-          name: name,
-          description: description,
-          photo: photo,
-          qr_code: url,
-        },
-      });
-
-      if (!newLocation)
-        return res.status(500).send({ Error: "Erro na criacao do usuario" });
-
-      return res.status(201).send({ Location: url });
+    const newLocation = await prisma.locations.create({
+      data: { 
+        name: name,
+        description: description,
+        photo: await uploadImage(file.buffer, name),
+        qr_code: await createQRcode(name),
+      },
     });
+
+    if (!newLocation)
+      return res.status(500).send({ Error: "Erro na criacao do usuario" });
+
+    return res.status(201).send({ Location: newLocation });
   } catch (err) {
-    console.log(err);
+    return res.status(500).send({ Error: err });
   }
 };
 
 export const put = async (req: Request, res: Response) => {
-  const { id, newName, newDescription, newPhoto } = req.body;
+  try {
+    const { id, oldName, newName, newDescription } = req.body;
+    const file = req.file
+  
+    const location = await prisma.locations.findFirst({
+      where: {
+        id: Number(id),
+      },
+    });
+  
+    if (!location) return res.status(404).send({ Error: "O local não existe." });
+  
+    if (!file) {
+      const updateLocation = await prisma.locations.update({
+        where: {
+          id: Number(id),
+        },
+        data: {
+          name: newName,
+          description: newDescription,
+        },
+      });
+  
+      if (!updateLocation)
+      return res
+        .status(500)
+        .send({ Error: "Não foi possível atualizar o Local" });
+  
+      return res.status(200).send({ Location: updateLocation });
+    }
+  
+    const updateLocation = await prisma.locations.update({
+      where: {
+        id: Number(id),
+      },
+      data: {
+        name: newName,
+        description: newDescription,
+        photo: await updateImage(file.buffer, oldName),
+      },
+    });
+  
+    if (!updateLocation)
+      return res
+        .status(500)
+        .send({ Error: "Não foi possível atualizar o Local" });
+  
+    return res.status(200).send({ Location: updateLocation });
 
-  const location = await prisma.locations.findFirst({
-    where: {
-      id: id,
-    },
-  });
-
-  if (!location) return res.status(404).send({ Error: "O local não existe." });
-
-  const updateLocation = await prisma.locations.update({
-    where: {
-      id: id,
-    },
-    data: {
-      name: newName,
-      description: newDescription,
-      photo: newPhoto,
-    },
-  });
-  if (!updateLocation)
-    return res
-      .status(500)
-      .send({ Error: "Não foi possível atualizar o Local" });
-
-  return res.status(200).send({ Location: updateLocation });
+  } catch (err) {
+    console.log(err)
+  }
 };
 
 export const del = async (req: Request, res: Response) => {
-  const { id } = req.body;
-  const location = await prisma.locations.findFirst({
-    where: {
-      id: id,
-    },
-  });
+  try {
+    const { name } = req.body;
+    const location = await prisma.locations.findFirst({
+      where: {
+        name: name,
+      },
+    });
+  
+    if (!location) return res.status(404).send({ Error: "O local não existe." });
+  
+    const deletedLocation = await prisma.locations.delete({
+      where: {
+        name: name,
+      },
+    });
+    
+    const deletedImage = deleteImage(name);
+  
+    if (!deletedLocation)
+      return res.status(500).send({ Error: "Não foi possível deletar o local" });
+  
+    return res.status(200).send({ Location: deletedLocation });
 
-  if (!location) return res.status(404).send({ Error: "O local não existe." });
-
-  const deletedLocation = await prisma.locations.delete({
-    where: {
-      id: id,
-    },
-  });
-  if (!deletedLocation)
-    return res.status(500).send({ Error: "Não foi possível deletar o local" });
-
-  return res.status(200).send({ Location: deletedLocation });
+  } catch (err) {
+    console.log(err)
+  }
 };
