@@ -8,7 +8,7 @@ const prisma = new PrismaClient();
 const authRouter = Router();
 
 // Secret key from .env file
-const SECRET_KEY = "OT157895321562OAISUhUNDEhWLLJ";
+const SECRET_KEY = <Secret>process.env.SECRET_KEY;
 
 authRouter.post("/auth/login", async (req: Request, res: Response) => {
   const { username, password } = req.body;
