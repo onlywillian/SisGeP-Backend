@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from "express";
 import { PrismaClient } from "@prisma/client";
-import QRCode from "qrcode";
 import createQRcode from "../services/createQRcode";
 import uploadImage from "../services/uploadImageService";
 import updateImage from "../services/updateImageService";
@@ -10,7 +9,13 @@ const prisma = new PrismaClient();
 
 export const get = async (req: Request, res: Response) => {
   try {
-    const equipments = await prisma.equipments.findMany();
+    const equipments = await prisma.equipments.findMany({
+      include: {
+        Locations: true,
+        Current: true,
+        Last_Used: true
+      }
+    });
   
     if (!equipments)
       return res.status(404).send({ Error: "Nenhum equipamento encontrado." });
