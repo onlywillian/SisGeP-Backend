@@ -13,7 +13,7 @@ const SECRET_KEY = <Secret>process.env.SECRET_KEY;
 authRouter.post("/auth/login", async (req: Request, res: Response) => {
   const { username, password } = req.body;
 
-  if (!username) return res.status(200).send({ Error: "Nome de usuário não informado" });
+  if (!username) return res.status(200).send({ Error: "asdsadsad" });
 
   if (!password) return res.status(200).send({ Error: "Senha não informada" });
 

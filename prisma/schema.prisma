@@ -44,7 +44,7 @@ model Equipments {
   current_location_id Int?
   Last_Used           Users?     @relation(fields: [last_used], references: [id])
   last_used           Int?
-  qr_code             String     @db.Text
+  qr_code             String?    @db.Text
   createdAt           DateTime   @default(now())
   updatedAt           DateTime   @updatedAt
 }

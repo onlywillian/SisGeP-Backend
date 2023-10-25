@@ -1,5 +1,7 @@
 import QRCode from "qrcode";
 
-export default async function createQRcode(ref: number | string) {
-    return await QRCode.toDataURL(`http://localhost:3001/locations/${ref}`, { scale: 8 })
+type values =  "equipments"| "locations"|"users"
+
+export default async function createQRcode(ref: number | string, type: values) {
+    return await QRCode.toDataURL(`https://sisgep-api.onrender.com/${type}/${ref}`, { scale: 8 })
 }

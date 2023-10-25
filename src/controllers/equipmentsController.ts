@@ -49,6 +49,7 @@ export const getUnique = async (req: Request, res: Response) => {
 export const post = async (req: Request, res: Response) => {
   try {
     const {
+      id,
       name,
       description,
       initialLocation,
@@ -77,11 +78,23 @@ export const post = async (req: Request, res: Response) => {
         root_location_id: Number(initialLocation),  
         current_location_id: Number(actualLocation),
         last_used: Number(lastUsed),
-        qr_code: await createQRcode(name),
       },
     });
+
     if (!newEquipment)
       return res.status(400).send({ Error: "Erro na criacao do usuario" });
+
+    const equipmentUpdate = await prisma.equipments.update({
+      where: {
+        id: newEquipment.id
+      }, 
+      data: {
+        qr_code: await createQRcode(newEquipment.id, "equipments")
+      }
+    });
+
+    if (!equipmentUpdate)
+      return res.status(400).send({ Error: "Erro na atualizacao do QRcode" });
   
     return res.status(201).send({ Equipments: newEquipment });
   } catch (err) {
