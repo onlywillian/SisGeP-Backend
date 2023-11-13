@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -15,7 +12,7 @@ model Locations {
   name        String   @unique @db.VarChar(255)
   description String   @db.VarChar(255)
   photo       String   @db.VarChar(255)
-  qr_code     String   @db.Text
+  qr_code     String?  @db.Text
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -24,13 +21,13 @@ model Locations {
 }
 
 model Users {
-  id         Int          @id @default(autoincrement())
-  username   String       @unique @db.VarChar(255)
-  office     String       @db.VarChar(255)
-  password   String       @db.VarChar(255)
-  createdAt  DateTime     @default(now())
-  updatedAt  DateTime     @updatedAt
-  Equipments Equipments[]
+  id         Int         @id @default(autoincrement())
+  username   String      @unique @db.VarChar(255)
+  office     String      @db.VarChar(255)
+  password   String      @db.VarChar(255)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  Equipments Equipments?
 }
 
 model Equipments {
@@ -43,7 +40,7 @@ model Equipments {
   Current             Locations? @relation("currentLocation", fields: [current_location_id], references: [id])
   current_location_id Int?
   Last_Used           Users?     @relation(fields: [last_used], references: [id])
-  last_used           Int?
+  last_used           Int?       @unique
   qr_code             String?    @db.Text
   createdAt           DateTime   @default(now())
   updatedAt           DateTime   @updatedAt

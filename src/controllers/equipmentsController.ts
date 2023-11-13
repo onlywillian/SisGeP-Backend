@@ -11,9 +11,21 @@ export const get = async (req: Request, res: Response) => {
   try {
     const equipments = await prisma.equipments.findMany({
       include: {
-        Locations: true,
-        Current: true,
-        Last_Used: true
+        Locations: {
+          select: {
+            name: true
+          }
+        },
+        Current: {
+          select: {
+            name: true
+          }
+        },
+        Last_Used: {
+          select: {
+            username: true
+          }
+        }
       }
     });
   
@@ -34,6 +46,23 @@ export const getUnique = async (req: Request, res: Response) => {
       where: {
         id: Number(id),
       },
+      include: {
+        Locations: {
+          select: {
+            name: true
+          }
+        },
+        Current: {
+          select: {
+            name: true
+          }
+        },
+        Last_Used: {
+          select: {
+            username: true
+          }
+        }
+      }
     });
   
     if (!equipment)
@@ -49,7 +78,6 @@ export const getUnique = async (req: Request, res: Response) => {
 export const post = async (req: Request, res: Response) => {
   try {
     const {
-      id,
       name,
       description,
       initialLocation,
@@ -89,7 +117,7 @@ export const post = async (req: Request, res: Response) => {
         id: newEquipment.id
       }, 
       data: {
-        qr_code: await createQRcode(newEquipment.id, "equipments")
+        qr_code: await createQRcode(newEquipment.id, "equipment")
       }
     });
 
@@ -115,33 +143,102 @@ export const put = async (req: Request, res: Response) => {
   
     const file = req.file;
   
-    if (!file) return res.status(401).send({ Error: "Nenhum marquivo foi enviado" });
-  
     const equipment = await prisma.equipments.findFirst({
       where: {
-        id: id,
+        id: Number(id),
       },
     });
   
     if (!equipment)
       return res.status(500).send({ Error: "O equipamento não existe." });
+
+    if (!file) {
+      const updateEquipment = await prisma.equipments.update({
+        where: {
+          id: Number(id)
+        },
+        data: {
+          name: newName,
+          description: newDescription,
+          Locations: {
+            connect: {
+              id: Number(newRootLocationId)
+            }
+          },
+          Current: {
+            connect: {
+              id: Number(newCurrentLocationId),
+            }
+          },
+          Last_Used: {
+            connect: {
+              id: Number(newLastUser)
+            }
+          }
+        },
+      });
+
+      if (!updateEquipment)
+      return res.status(500).send({ Error: "Algum erro ocorreu" });
+  
+      return res.status(200).send({ Equipments: updateEquipment });
+    } 
   
     const updateEquipment = await prisma.equipments.update({
       where: {
-        id: id
+        id: Number(id)
       },
       data: {
         name: newName,
         description: newDescription,
-        photo: await updateImage(file?.buffer, id),
-        root_location_id: newRootLocationId,
-        current_location_id: newCurrentLocationId,
-        last_used: newLastUser
+        photo: await updateImage(file.buffer, id),
+        Locations: {
+          connect: {
+            id: Number(newRootLocationId)
+          }
+        },
+        Current: {
+          connect: {
+            id: Number(newCurrentLocationId),
+          }
+        },
+        Last_Used: {
+          connect: {
+            id: Number(newLastUser)
+          }
+        }
       },
     });
   
-    const deletedImage = deleteImage(id);
+    if (!updateEquipment)
+      return res.status(500).send({ Error: "Algum erro ocorreu" });
   
+    return res.status(200).send({ Equipments: updateEquipment });
+  } catch (err) {
+    console.log(err)
+  }
+};
+
+export const updateEquipment = async (req: Request, res: Response) => {
+  try {
+    const {
+      equipmentId,
+      locationId,
+    } = req.body; 
+  
+    const updateEquipment = await prisma.equipments.update({
+      where: {
+        id: Number(equipmentId)
+      },
+      data: {
+        Current: {
+          connect: {
+            id: Number(locationId)
+          }
+        }
+      },
+    });
+
     if (!updateEquipment)
       return res.status(500).send({ Error: "Algum erro ocorreu" });
   

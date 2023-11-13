@@ -15,7 +15,8 @@ equipmentsRouter.post(
   upload.single("photo"),
   equipmentsController.post
 );
+equipmentsRouter.put("/equipments/updateLocation", equipmentsController.updateEquipment)
 equipmentsRouter.put("/equipments/update", upload.single("photo"), equipmentsController.put);
 equipmentsRouter.delete("/equipments/delete", equipmentsController.del);
 
-export default equipmentsRouter;  
+export default equipmentsRouter;

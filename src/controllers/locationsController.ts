@@ -62,14 +62,22 @@ export const post = async (req: Request, res: Response) => {
         name: name,
         description: description,
         photo: await uploadImage(file.buffer, name),
-        qr_code: await createQRcode(name),
       },
     });
 
     if (!newLocation)
       return res.status(500).send({ Error: "Erro na criacao do usuario" });
 
-    return res.status(201).send({ Location: newLocation });
+    const updateLocation = await prisma.locations.update({
+      where: {
+        id: newLocation.id
+      }, 
+      data: {
+        qr_code: await createQRcode(newLocation.id, "location")
+      }
+    });
+
+    return res.status(201).send({ Location: updateLocation });
   } catch (err) {
     return res.status(500).send({ Error: err });
   }
